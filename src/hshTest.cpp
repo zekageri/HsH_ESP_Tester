@@ -4,58 +4,88 @@ void hshTest::setArraySize(int size) {
     arraySize = size;
 }
 
+boolean hshTest::isEven(int x){
+    if((x & 1) == 0){ return true; }
+    return false;
+}
+
 void hshTest::ramFill() {
     if (!psramFound()) {
         display.printf(DISP_ERROR, "There is no external ram on this module. Test aborted.");
         return;
     }
+    display.printf(DISP_INFO,"\n******* RAM FILL *******\n");
 
-    display.printf(DISP_INFO, "- Size: %d byte\n\n",
+    display.printf(DISP_INFO, "Size: %d byte\n",
         ESP.getPsramSize());
 
-    display.printf(DISP_INFO, "- Free: %d byte\n\n",
+    display.printf(DISP_INFO, "Free: %d byte\n",
         ESP.getFreePsram());
 
-    display.printf(DISP_INFO, "- Used: %d byte\n\n",
+    display.printf(DISP_INFO, "Used: %d byte\n",
         ESP.getPsramSize() - ESP.getFreePsram());
 
-    // Allocate a char array in external ram with size of arraySize
-    charArr = (char*)ps_malloc(arraySize * sizeof(char));
+    // Allocate memory in external ram with size of arraySize
+    psAlloc.reserve(arraySize);
 
-    // Fill this array with 0xFF
-    for (size_t i = 0; i < sizeof(charArr); i++) {
-        charArr[i] = 0xFF;
-    }
-    display.printf(DISP_INFO, "- Array filled with 0xFF\n\n");
-
-    // Fill this array with 0x00
-    for (size_t i = 0; i < sizeof(charArr); i++) {
-        charArr[i] = 0x00;
-    }
-    display.printf(DISP_INFO, "- Array filled with 0x00\n\n");
-
-    // Fill this array with 0x00
-    for (size_t i = 0; i < sizeof(charArr); i++) {
-        charArr[i] = 0x00;
-    }
-    display.printf(DISP_INFO, "- Array filled with 0x00\n\n");
-
-    if (charArr == NULL || !charArr) {
-        display.printf(DISP_ERROR, "- Failed to allocate buffer with size: %d\n\n",
-        arraySize);
-        return;
-    }
-
-    display.printf(DISP_INFO, "- Used after allocation of %d bytes is: %d byte\n\n",
+    display.printf(DISP_INFO, "Used after allocation of %d bytes is: %d byte\n",
         arraySize, ESP.getPsramSize() - ESP.getFreePsram());
 
-    free(charArr);
+    boolean memIsOk = true;
+    for (uint32_t x=0; x<psAlloc.size(); x++) {
+        //psAlloc.push_back(0xFFFF);
+        //psAlloc.assign(x,0xFFF);
+        psAlloc[x] = 0xFFFF;
+        if( psAlloc.at(x) != 0xFFFF ){
+            memIsOk = false;
+            break;
+        }
+    }
+    display.printf(DISP_INFO, "Memory is %s for 0xFFFF.\n",memIsOk?"ok":"faulted");
+    memIsOk = true;
+    for (uint32_t x=0; x<psAlloc.size(); x++) {
+        //psAlloc.push_back(0x0000);
+        //psAlloc.assign(x,0x0000);
+        psAlloc[x] = 0x0000;
+        if( psAlloc.at(x) != 0x0000 ){
+            memIsOk = false;
+            break;
+        }
+    }
+    display.printf(DISP_INFO, "Memory is %s for 0x0000.\n",memIsOk?"ok":"faulted");
+    memIsOk = true;
+    for (uint32_t x=0; x<psAlloc.size(); x++) {
+        if( isEven(x) ){
+            //psAlloc.push_back(0x0000);
+            //psAlloc.assign(x,0x0000);
+            psAlloc[x] = 0x0000;
+            if( psAlloc.at(x) != 0x0000 ){
+                memIsOk = false;
+                break;
+        }
+        }else{
+            //psAlloc.push_back(0xFFFF);
+            //psAlloc.assign(x,0xFFFF);
+            psAlloc[x] = 0xFFFF;
+            if( psAlloc.at(x) != 0xFFFF ){
+                memIsOk = false;
+                break;
+            }
+        }
+    }
+    display.printf(DISP_INFO, "Memory is %s for odd-even.\n",memIsOk?"ok":"faulted");
+    psAlloc.clear();
+    psAlloc.shrink_to_fit();
 
-    display.printf(DISP_INFO, "- Used after free of %d bytes is: %d byte\n\n",
+    display.printf(DISP_INFO, "Used after free of %d bytes is: %d byte\n",
         arraySize, ESP.getPsramSize() - ESP.getFreePsram());
+
+    display.printf(DISP_INFO,"******* RAM FILL DONE *******\n");
 }
 
 void hshTest::json(const char* jsonChar) {
+    display.printf(DISP_INFO,"\n******* JSON TEST *******\n");
+
     size_t size = (strlen(jsonChar) * 2) + 1;
 
     jsonDoc testDoc(size);
@@ -66,10 +96,12 @@ void hshTest::json(const char* jsonChar) {
         return;
     }
 
-    display.printf(DISP_INFO, "- Used after allocation of %d bytes is: %d byte\n\n",
+    display.printf(DISP_INFO, "Used after allocation of %d bytes is: %d byte\n",
         size, ESP.getPsramSize() - ESP.getFreePsram());
-
+    
     serializeJsonPretty(testDoc, Serial);
+    display.printf(DISP_INFO,"\n");
+    display.printf(DISP_INFO,"******* JSON TEST DONE *******\n");
 }
 
 double hshTest::getTime() { return (double)esp_timer_get_time() / 1000000; }

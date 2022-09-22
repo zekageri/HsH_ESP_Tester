@@ -12,7 +12,7 @@ void setup() {
 
   test.ramFill();
   test.json("{\"sensor\":\"gps\",\"time\":1351824120,\"data\":[48.756080,2.302038]}");
-  test.setArraySize(4000000);
+  test.setArraySize(500000);
   test.ramFill();
 
   // External ram speed test
