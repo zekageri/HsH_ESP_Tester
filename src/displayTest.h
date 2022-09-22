@@ -13,11 +13,12 @@
 
 class spiDisplay {
     private:
+        boolean hasDisplay = true;
         TFT_eSPI tft = TFT_eSPI();
         String allText;
         void scrollOne();
     public:
-        void init();
+        void init( boolean hasDisplay = true );
         int printf( int type, const char *message, ...  );
         void clear();
 };
